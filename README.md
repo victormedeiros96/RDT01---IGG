@@ -6,15 +6,16 @@ Sistema para análise de patologias de pavimento asfáltico com suporte a modelo
 
 ```
 rdt01/
-├── backend/          # FastAPI (Python 3.12)
+├── backend/                 # FastAPI (Python 3.12)
 │   ├── src/
-│   │   ├── api/      # Rotas REST
-│   │   ├── core/     # Config, dependências
-│   │   ├── models/   # Modelos de dados
-│   │   └── services/ # Lógica de negócio
+│   │   ├── api/             # Rotas REST
+│   │   ├── core/            # Config, dependências
+│   │   ├── models/          # Modelos de dados
+│   │   └── services/        # Lógica de negócio
 │   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/         # React/TypeScript (Vite)
+│   ├── requirements.txt     # Dependências GPU (Linux/Docker)
+│   └── requirements-cpu.txt # Dependências CPU (Windows/sem GPU)
+├── frontend/                # React/TypeScript (Vite)
 │   ├── src/
 │   │   ├── components/
 │   │   ├── services/
@@ -22,24 +23,22 @@ rdt01/
 │   ├── Dockerfile
 │   └── nginx.conf
 ├── docker-compose.yml
-├── sources.json      # Fontes de dados (pastas de imagens)
-└── modelos/          # Config dos modelos (pesos .pt/.onnx ficam fora)
+├── sources.json             # Fontes de dados (pastas de imagens)
+└── modelos/
+    └── igg/
+        ├── config.json
+        ├── trincas.pt       # Modelo treinado
+        └── panela_remendo.pt
 ```
 
 ## Pré-requisitos
 
-- Docker e Docker Compose
-- NVIDIA CUDA (para GPU)
-- Modelos .pt/.onnx em `../modelos/igg/` (fora do repositório)
-- Dados de processamento em `../dados/` (fora do repositório)
+- **Linux (recomendado):** Docker, Docker Compose, NVIDIA CUDA + Container Toolkit
+- **Windows:** Node.js 22+, Python 3.12+, Redis (ou WSL2)
 
-## Configuração
+## Build e Execução
 
-1. Edite `sources.json` com as pastas de dados
-2. Coloque os modelos .pt em `../modelos/igg/`
-3. Ajuste `docker-compose.yml` se necessário
-
-## Execução
+### Linux — Docker (com GPU)
 
 ```bash
 cd rdt01
@@ -48,3 +47,49 @@ docker compose up -d --build
 
 - Backend: http://localhost:8000
 - Frontend: http://localhost:5173
+
+### Windows / sem GPU — nativo
+
+**Backend:**
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate      # Windows
+pip install -r requirements-cpu.txt
+uvicorn src.main:app --host 0.0.0.0 --port 8000
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm install
+npm run dev                  # http://localhost:5173
+```
+
+**Redis (obrigatório para jobs):**
+- Windows: WSL2 com `redis-server` ou Docker Desktop
+- Ou instalar Redis via [Memurai](https://www.memurai.com/) (Windows nativo)
+
+### Windows — Docker Desktop
+
+```bash
+cd rdt01
+docker compose up -d --build
+```
+
+> **Nota:** No Windows, o Docker Desktop não suporta GPU nativamente.
+> Use o modo nativo (acima) para desenvolvimento local com CPU.
+
+## Configuração
+
+1. Edite `sources.json` com as pastas de dados
+2. Os dados de processamento e referências ficam em `../dados/` e `../Referencias/` (fora do repositório)
+3. Ajuste `docker-compose.yml` se os caminhos das pastas forem diferentes
+
+## Dependências
+
+### GPU (Docker Linux) — `requirements.txt`
+- `onnxruntime-gpu`, `torch` (compilado CUDA), `ultralytics`
+
+### CPU (Windows/sem GPU) — `requirements-cpu.txt`
+- `onnxruntime`, `torch` (CPU), `ultralytics`

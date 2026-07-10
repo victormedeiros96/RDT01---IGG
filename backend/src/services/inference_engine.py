@@ -45,7 +45,17 @@ class LetterBox:
 
 class YOLOv8ONNX:
     def __init__(self, model_path: str | Path, use_cuda: bool = True):
-        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"] if use_cuda else ["CPUExecutionProvider"]
+        if use_cuda:
+            try:
+                available = ort.get_available_providers()
+                if "CUDAExecutionProvider" in available:
+                    providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                else:
+                    providers = ["CPUExecutionProvider"]
+            except Exception:
+                providers = ["CPUExecutionProvider"]
+        else:
+            providers = ["CPUExecutionProvider"]
         self.session = ort.InferenceSession(str(model_path), providers=providers)
         self.input_name = self.session.get_inputs()[0].name
         raw_shape = self.session.get_inputs()[0].shape
