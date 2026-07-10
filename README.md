@@ -1,34 +1,50 @@
-# RDT01 - Sistema de Análise de Patologias de Pavimento
+# RDT01 — Análise de Patologias de Pavimento
 
-Sistema para análise de patologias asfálticas utilizando IA diretamente no browser (WebGPU via ONNX Runtime Web) e geração de relatórios IGG/ICP.
+Sistema para análise de patologias de pavimento asfáltico com suporte a modelos YOLO (PT/ONNX), edição manual de detecções por anotação de bbox, cálculo de IGG (DNIT 006/2003-PRO) e importação de dados de perfilômetro.
 
-## Estrutura
+## Estrutura do Projeto
 
 ```
-backend/         # API FastAPI (Python 3.12)
-frontend/        # SPA React + TypeScript + Vite
-modelos/         # Pesos dos modelos ONNX organizados por tipo
-  igg/           #   Modelos para cálculo IGG
-  icp/           #   Modelos para cálculo ICP
-dados/           # Dados dos projetos (montado como volume)
+rdt01/
+├── backend/          # FastAPI (Python 3.12)
+│   ├── src/
+│   │   ├── api/      # Rotas REST
+│   │   ├── core/     # Config, dependências
+│   │   ├── models/   # Modelos de dados
+│   │   └── services/ # Lógica de negócio
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/         # React/TypeScript (Vite)
+│   ├── src/
+│   │   ├── components/
+│   │   ├── services/
+│   │   └── types/
+│   ├── Dockerfile
+│   └── nginx.conf
+├── docker-compose.yml
+├── sources.json      # Fontes de dados (pastas de imagens)
+└── modelos/          # Config dos modelos (pesos .pt/.onnx ficam fora)
 ```
+
+## Pré-requisitos
+
+- Docker e Docker Compose
+- NVIDIA CUDA (para GPU)
+- Modelos .pt/.onnx em `../modelos/igg/` (fora do repositório)
+- Dados de processamento em `../dados/` (fora do repositório)
+
+## Configuração
+
+1. Edite `sources.json` com as pastas de dados
+2. Coloque os modelos .pt em `../modelos/igg/`
+3. Ajuste `docker-compose.yml` se necessário
 
 ## Execução
 
 ```bash
-docker compose up --build
+cd rdt01
+docker compose up -d --build
 ```
 
+- Backend: http://localhost:8000
 - Frontend: http://localhost:5173
-- Backend API: http://localhost:8000
-- Health check: http://localhost:8000/health
-
-## Funcionalidades (planejadas)
-
-- [ ] Carregamento de modelos ONNX com WebGPU no browser
-- [ ] Processamento de imagens linescan do pavimento
-- [ ] Editor de grid interativo (retigráfico)
-- [ ] Cálculo IGG (Índice de Gravidade Global)
-- [ ] Cálculo ICP (Índice de Condição do Pavimento)
-- [ ] Exportação para planilha ANTT
-- [ ] Suporte a múltiplos projetos
