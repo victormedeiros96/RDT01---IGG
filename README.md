@@ -50,6 +50,20 @@ docker compose up -d --build
 
 ### Windows / sem GPU — nativo
 
+**Redis:**
+```bash
+# Opção 1: Docker Desktop (recomendado)
+docker run -d -p 6379:6379 redis:7-alpine
+
+# Opção 2: WSL2
+wsl --install -d Ubuntu
+sudo apt install redis-server
+redis-server
+
+# Opção 3: Memurai (Windows nativo)
+# Baixe em https://www.memurai.com/
+```
+
 **Backend:**
 ```bash
 cd backend
@@ -65,10 +79,6 @@ cd frontend
 npm install
 npm run dev                  # http://localhost:5173
 ```
-
-**Redis (obrigatório para jobs):**
-- Windows: WSL2 com `redis-server` ou Docker Desktop
-- Ou instalar Redis via [Memurai](https://www.memurai.com/) (Windows nativo)
 
 ### Windows — Docker Desktop
 
