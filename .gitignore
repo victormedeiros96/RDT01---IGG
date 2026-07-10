@@ -18,7 +18,6 @@ venv/
 
 # Models (large binary files)
 *.onnx
-*.pt
 *.pth
 
 # Data (processed data, large)
