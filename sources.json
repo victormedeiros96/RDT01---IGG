@@ -1,0 +1,10 @@
+{
+  "fontes": [
+    {
+      "id": "br163_teste_novo",
+      "nome": "BR163 Trecho Teste",
+      "origem": "/app/dados/br163_teste_novo",
+      "destino": "br163_teste_novo"
+    }
+  ]
+}

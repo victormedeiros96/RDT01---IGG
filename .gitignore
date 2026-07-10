@@ -1,0 +1,45 @@
+# Node
+node_modules/
+dist/
+.vite/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Environment
+.env
+.env.local
+
+# Models (large binary files)
+*.onnx
+*.pt
+*.pth
+
+# Data (processed data, large)
+dados/
+*.xlsx
+*.xls
+*.csv
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Temp
+*.log
+tmp/
