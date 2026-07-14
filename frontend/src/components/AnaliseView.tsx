@@ -158,6 +158,7 @@ export function AnaliseView() {
   const [error, setError]               = useState('')
   const [saveMessage, setSaveMessage]   = useState('')
   const [iggResultado, setIggResultado] = useState<IGGResultado | null>(null)
+  const [undoCount, setUndoCount]       = useState(0)
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -180,6 +181,8 @@ export function AnaliseView() {
   })
   const iggDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const undoStackRef = useRef<Deteccao[][]>([])
+  const MAX_UNDO = 20
   const editDragRef = useRef<{
     active: boolean
     index: number
@@ -407,6 +410,22 @@ export function AnaliseView() {
     })
   }
 
+  const pushUndo = useCallback((dets: Deteccao[]) => {
+    undoStackRef.current.push(dets.map((d) => ({ ...d })))
+    if (undoStackRef.current.length > MAX_UNDO) {
+      undoStackRef.current.shift()
+    }
+    setUndoCount(undoStackRef.current.length)
+  }, [])
+
+  const handleUndo = useCallback(() => {
+    const prev = undoStackRef.current.pop()
+    if (prev) {
+      setEditedDetections(prev)
+      setUndoCount(undoStackRef.current.length)
+    }
+  }, [])
+
   const handleFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !analise) return
@@ -449,6 +468,25 @@ export function AnaliseView() {
       setSaveMessage('Exportação concluída.')
     } catch {
       setError('Erro ao exportar')
+    }
+  }, [analise])
+
+  const handleExportarXlsx = useCallback(async () => {
+    if (!analise) return
+    try {
+      setSaveMessage('Exportando XLSX...')
+      const res = await fetch(`/api/relatorios/exportar-xlsx/${analise.viagem}`, { method: 'POST' })
+      if (!res.ok) { setError('Erro ao exportar XLSX'); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `igg_${analise.viagem}.xlsx`
+      a.click()
+      URL.revokeObjectURL(url)
+      setSaveMessage('XLSX exportado.')
+    } catch {
+      setError('Erro ao exportar XLSX')
     }
   }, [analise])
 
@@ -621,6 +659,7 @@ export function AnaliseView() {
       setDraftBox(null)
       event.currentTarget.releasePointerCapture(event.pointerId)
       if (box[2] - box[0] >= 12 && box[3] - box[1] >= 12) {
+        pushUndo(editedDetections)
         setEditedDetections((current) => [...current, makeManualDetection(box)])
         setSelectedDetectionIndex(editedDetections.length)
       }
@@ -634,18 +673,20 @@ export function AnaliseView() {
     if (!panRef.current.active) return
     panRef.current.active = false
     event.currentTarget.releasePointerCapture(event.pointerId)
-  }, [editedDetections.length, selectedClass, toolMode])
+  }, [editedDetections, pushUndo, selectedClass, toolMode])
 
   const handleBoxPointerDown = useCallback((event: PointerEvent<SVGElement>, index: number) => {
     event.stopPropagation()
     setClassMenu(null)
     if (toolMode === 'erase') {
+      pushUndo(editedDetections)
       setEditedDetections((current) => current.filter((_, idx) => idx !== index))
       setSelectedDetectionIndex(null)
       return
     }
     const point = getSvgPoint(event)
     if (!point) return
+    pushUndo(editedDetections)
     setSelectedDetectionIndex(index)
     editDragRef.current = {
       active: true,
@@ -656,7 +697,7 @@ export function AnaliseView() {
       startBox: [...editedDetections[index].global_box],
     }
     svgRef.current?.setPointerCapture(event.pointerId)
-  }, [editedDetections, toolMode])
+  }, [editedDetections, pushUndo, toolMode])
 
   const handleBoxContextMenu = useCallback((event: MouseEvent<SVGElement>, index: number) => {
     event.preventDefault()
@@ -668,17 +709,19 @@ export function AnaliseView() {
   const changeDetectionClass = useCallback((index: number, letter: string) => {
     const info = PATHOLOGY_CLASSES[letter]
     if (!info) return
+    pushUndo(editedDetections)
     setEditedDetections((current) => current.map((det, idx) => (
       idx === index ? { ...det, classe: info.name } : det
     )))
     setSelectedClass(letter)
     setClassMenu(null)
-  }, [])
+  }, [editedDetections, pushUndo])
 
   const handleHandlePointerDown = useCallback((event: PointerEvent<SVGElement>, index: number, handle: 'nw' | 'ne' | 'sw' | 'se') => {
     event.stopPropagation()
     const point = getSvgPoint(event)
     if (!point) return
+    pushUndo(editedDetections)
     setSelectedDetectionIndex(index)
     editDragRef.current = {
       active: true,
@@ -690,7 +733,7 @@ export function AnaliseView() {
       startBox: [...editedDetections[index].global_box],
     }
     svgRef.current?.setPointerCapture(event.pointerId)
-  }, [editedDetections])
+  }, [editedDetections, pushUndo])
 
   // ── Selecionar faixa a partir de clique no grid
   const handleGridCellClick = useCallback((arquivo: string | null) => {
@@ -731,7 +774,10 @@ export function AnaliseView() {
                 {saving ? 'Salvando...' : 'Salvar Edições'}
               </button>
               <button className="btn btn-secondary" disabled={!analise} onClick={handleExportarViagem}>
-                📤 Exportar
+                📤 CSV
+              </button>
+              <button className="btn btn-secondary" disabled={!analise} onClick={handleExportarXlsx}>
+                📊 XLSX
               </button>
             </div>
           </div>
@@ -939,7 +985,12 @@ export function AnaliseView() {
                 </div>
 
                 <div className="annotation-side-actions">
-                  <button type="button" className="btn-sm" disabled>Desfazer</button>
+                  <button
+                    type="button"
+                    className="btn-sm"
+                    disabled={undoCount === 0}
+                    onClick={handleUndo}
+                  >Desfazer</button>
                   <button
                     type="button"
                     className={`btn-sm ${toolMode === 'move' ? 'active' : ''}`}

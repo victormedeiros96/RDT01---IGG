@@ -15,6 +15,7 @@ export function ReportsView() {
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [exporting, setExporting] = useState<string | null>(null)
+  const [exportingXlsx, setExportingXlsx] = useState<string | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -38,6 +39,22 @@ export function ReportsView() {
       URL.revokeObjectURL(url)
     } catch { /* silent */ }
     setExporting(null)
+  }
+
+  const handleExportXlsx = async (viagem: string) => {
+    setExportingXlsx(viagem)
+    try {
+      const res = await fetch(`/api/relatorios/exportar-xlsx/${viagem}`, { method: 'POST' })
+      if (!res.ok) return
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `igg_${viagem}.xlsx`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch { /* silent */ }
+    setExportingXlsx(null)
   }
 
   const handleAnalise = (viagem: string) => {
@@ -102,6 +119,14 @@ export function ReportsView() {
                         title="Exportar CSV"
                       >
                         <IconDownload size={14} />
+                      </button>
+                      <button
+                        className="btn-sm"
+                        onClick={(e) => { e.stopPropagation(); handleExportXlsx(v.viagem) }}
+                        disabled={exportingXlsx === v.viagem}
+                        title="Exportar XLSX"
+                      >
+                        <span style={{ fontSize: '0.7rem', fontWeight: 700 }}>X</span>
                       </button>
                       <button
                         className="btn-sm"

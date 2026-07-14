@@ -248,3 +248,94 @@ async def exportar_viagem(
             "Content-Type": "text/csv; charset=utf-8",
         },
     )
+
+
+@router.post("/exportar-xlsx/{viagem_nome}")
+async def exportar_viagem_xlsx(
+    viagem_nome: str,
+    settings: Settings = Depends(get_settings_dep),
+):
+    import io
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+    base = settings.dados_dir / viagem_nome
+    analise_path = base / "analise_completa.json"
+    if not analise_path.is_file():
+        raise HTTPException(404, "Análise não encontrada")
+
+    analise = json.loads(analise_path.read_text("utf-8"))
+    params_path = base / "parametros_adicionais.json"
+    parametros: dict = {}
+    if params_path.is_file():
+        try:
+            parametros = json.loads(params_path.read_text("utf-8"))
+        except Exception:
+            parametros = {}
+
+    agrupado = montar_estacoes_por_km(analise, viagem_nome, base)
+    if not agrupado:
+        raise HTTPException(404, "Nenhum KM encontrado")
+
+    resultados = []
+    for km_key, data in sorted(agrupado.items(), key=lambda x: int(x[0])):
+        params_km = parametros.get(km_key, {})
+        r = calcular_igg_por_km(int(km_key), data["estacoes"], params_km)
+        resultados.append(r)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"IGG {viagem_nome}"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="6366F1", end_color="6366F1", fill_type="solid")
+    thin_border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+
+    headers = ["KM INICIAL", "KM FINAL", "IGG", "CONCEITO"]
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal="center")
+        cell.border = thin_border
+
+    conceito_fills = {
+        "Ótimo": PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid"),
+        "Bom": PatternFill(start_color="CCFBF1", end_color="CCFBF1", fill_type="solid"),
+        "Regular": PatternFill(start_color="FEF3C7", end_color="FEF3C7", fill_type="solid"),
+        "Ruim": PatternFill(start_color="FFEDD5", end_color="FFEDD5", fill_type="solid"),
+        "Péssimo": PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid"),
+    }
+
+    for i, r in enumerate(resultados, 2):
+        ws.cell(row=i, column=1, value=r["km"]).border = thin_border
+        ws.cell(row=i, column=2, value=r["km"] + 1).border = thin_border
+        ws.cell(row=i, column=3, value=r["igg"]).border = thin_border
+        cell = ws.cell(row=i, column=4, value=r["conceito"])
+        cell.border = thin_border
+        fill = conceito_fills.get(r["conceito"])
+        if fill:
+            cell.fill = fill
+            cell.font = Font(bold=True)
+
+    ws.column_dimensions["A"].width = 14
+    ws.column_dimensions["B"].width = 12
+    ws.column_dimensions["C"].width = 10
+    ws.column_dimensions["D"].width = 14
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return Response(
+        content=output.read(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f"attachment; filename=igg_{viagem_nome}.xlsx",
+        },
+    )
