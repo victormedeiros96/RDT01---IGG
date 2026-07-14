@@ -7,6 +7,7 @@ import { Layout } from './components/Layout'
 import { JobsList } from './components/JobsList'
 import { AnaliseView } from './components/AnaliseView'
 import { TestInference } from './components/TestInference'
+import { ReportsView } from './components/ReportsView'
 import { useAppStore } from './store'
 
 function HomeContent() {
@@ -56,14 +57,7 @@ export default function App() {
         <JobsList />
       </div>
     ),
-    reports: (
-      <div className="page">
-        <div className="page-header">
-          <h1>Relatórios</h1>
-          <p className="page-subtitle">Em construção</p>
-        </div>
-      </div>
-    ),
+    reports: <ReportsView />,
     analise: <AnaliseView />,
     test: <TestInference />,
   }

@@ -19,6 +19,70 @@ from src.services.planilha_import import importar_planilha
 router = APIRouter(prefix="/api/relatorios", tags=["relatorios"])
 
 
+@router.get("/viagens")
+async def listar_viagens(settings: Settings = Depends(get_settings_dep)):
+    base = settings.dados_dir
+    if not base.is_dir():
+        return []
+
+    from src.services.igg_calculator import classificar_igg
+
+    resultados = []
+    for pasta in sorted(base.iterdir()):
+        if not pasta.is_dir():
+            continue
+        analise_path = pasta / "analise_completa.json"
+        config_path = pasta / "viagem_config.json"
+        if not analise_path.is_file() or not config_path.is_file():
+            continue
+
+        try:
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            analise = json.loads(analise_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        params_path = pasta / "parametros_adicionais.json"
+        parametros: dict = {}
+        if params_path.is_file():
+            try:
+                parametros = json.loads(params_path.read_text(encoding="utf-8"))
+            except Exception:
+                parametros = {}
+
+        total_imagens = len(analise)
+        igg_por_km: list[dict] = []
+
+        agrupado = montar_estacoes_por_km(analise, pasta.name, pasta)
+        for km_key, data in sorted(agrupado.items(), key=lambda x: int(x[0])):
+            params_km = parametros.get(km_key, {})
+            r = calcular_igg_por_km(int(km_key), data["estacoes"], params_km)
+            igg_por_km.append({
+                "km": r["km"],
+                "igg": r["igg"],
+                "conceito": r["conceito"],
+            })
+
+        igg_medio = round(sum(i["igg"] for i in igg_por_km) / len(igg_por_km), 2) if igg_por_km else 0.0
+        conceitos_prioridade = ["Péssimo", "Ruim", "Regular", "Bom", "Ótimo"]
+        conceito_medio = min(
+            (c for c in conceitos_prioridade if c in [i["conceito"] for i in igg_por_km]),
+            key=lambda c: conceitos_prioridade.index(c),
+        ) if igg_por_km else ""
+
+        resultados.append({
+            "viagem": pasta.name,
+            "config": config,
+            "igg_por_km": igg_por_km,
+            "igg_medio": igg_medio,
+            "conceito_medio": conceito_medio,
+            "total_imagens": total_imagens,
+            "total_kms": len(igg_por_km),
+        })
+
+    return resultados
+
+
 @router.post("/retigrafico")
 async def gerar_retigrafico():
     return {"status": "pending", "arquivo": ""}

@@ -182,3 +182,24 @@ export async function salvarAnaliseEditada(
   })
   return data
 }
+
+export interface IGGPorKM {
+  km: number
+  igg: number
+  conceito: string
+}
+
+export interface ViagemResumo {
+  viagem: string
+  config: { km_inicial: number; km_final: number | null; sentido: string; tipo_pista: string; faixa: number | null }
+  igg_por_km: IGGPorKM[]
+  igg_medio: number
+  conceito_medio: string
+  total_imagens: number
+  total_kms: number
+}
+
+export async function listarViagens(): Promise<ViagemResumo[]> {
+  const { data } = await api.get('/relatorios/viagens')
+  return data
+}

@@ -2071,3 +2071,130 @@ html.light body {
   color: var(--primary);
   margin-left: auto;
 }
+
+/* ── Reports View ── */
+.reports-loading,
+.reports-empty {
+  padding: 3rem 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.reports-table-wrapper {
+  overflow-x: auto;
+}
+
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.reports-table th {
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.reports-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.reports-row:hover {
+  background: color-mix(in srgb, var(--primary-glow) 20%, transparent);
+}
+
+.reports-row td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.reports-expand-cell {
+  width: 32px;
+  color: var(--text-muted);
+}
+
+.reports-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.reports-igg-value {
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--primary);
+}
+
+.reports-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  border-radius: 6px;
+}
+
+.reports-badge-sm {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+}
+
+.reports-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.reports-actions .btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  line-height: 1;
+}
+
+.reports-detail-row td {
+  padding: 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.reports-detail {
+  padding: 1rem 1.5rem 1.25rem 3.5rem;
+  background: color-mix(in srgb, var(--bg-secondary) 40%, transparent);
+}
+
+.reports-detail-table {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  min-width: 300px;
+}
+
+.reports-detail-table th {
+  text-align: left;
+  padding: 0.3rem 0.6rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.reports-detail-table td {
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.reports-detail-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
