@@ -275,6 +275,7 @@ def processar_pasta(
     clahe_tile: int = 8,
     max_batches: int | None = None,
     workers: int | None = None,
+    modelo_lane: str | Path | None = None,
 ) -> list[dict]:
     """
     1. Ordena imagens e agrupa em lotes de imagens_por_lote.

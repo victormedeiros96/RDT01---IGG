@@ -16,6 +16,7 @@ services:
       - ../dados:/app/dados
       - ../Referencias:/app/referencias:ro
       - ./sources.json:/app/config/sources.json:ro
+      - /mnt/hd2:/mnt/hd2:ro
     environment:
       - MODELOS_DIR=/app/modelos
       - DADOS_DIR=/app/dados
