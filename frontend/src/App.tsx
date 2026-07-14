@@ -6,7 +6,6 @@ import { Processing } from './components/Processing'
 import { Layout } from './components/Layout'
 import { JobsList } from './components/JobsList'
 import { AnaliseView } from './components/AnaliseView'
-import { TestInference } from './components/TestInference'
 import { ReportsView } from './components/ReportsView'
 import { SettingsView } from './components/SettingsView'
 import { useAppStore } from './store'
@@ -60,7 +59,6 @@ export default function App() {
     ),
     reports: <ReportsView />,
     analise: <AnaliseView />,
-    test: <TestInference />,
     settings: <SettingsView />,
   }
 

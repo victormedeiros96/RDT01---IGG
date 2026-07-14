@@ -6,7 +6,6 @@ const TABS: { id: View; label: string; icon: typeof IconHome }[] = [
   { id: 'home', label: 'Início', icon: IconHome },
   { id: 'jobs', label: 'Processamentos', icon: IconImage },
   { id: 'analise', label: 'Análise', icon: IconEye },
-  { id: 'test', label: 'Teste', icon: IconEye },
   { id: 'reports', label: 'Relatórios', icon: IconBarChart },
   { id: 'settings', label: 'Config', icon: IconSettings },
 ]

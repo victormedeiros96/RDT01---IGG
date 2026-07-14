@@ -431,6 +431,16 @@ async def obter_analise(viagem_nome: str, settings: Settings = Depends(get_setti
             else:
                 km += bloco_idx * km_por_bloco + faixa_idx * km_por_faixa
 
+        # Carrega ROI da faixa (lane detection)
+        lane_roi = None
+        bloco_idx_lane = _bloco_num(nome)
+        lane_path = base / f"lote_{bloco_idx_lane:04d}_lane.json"
+        if lane_path.is_file():
+            try:
+                lane_roi = _json.loads(lane_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
         imagens.append({
             "arquivo": nome,
             "bloco_index": _bloco_num(nome),
@@ -440,6 +450,7 @@ async def obter_analise(viagem_nome: str, settings: Settings = Depends(get_setti
             "existe_imagem": existe,
             "total_deteccoes": len(deteccoes),
             "deteccoes": deteccoes,
+            "lane_roi": lane_roi,
         })
 
     return {

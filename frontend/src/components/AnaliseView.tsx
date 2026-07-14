@@ -896,6 +896,26 @@ export function AnaliseView() {
                         </g>
                       )
                     })}
+                    {selected?.lane_roi?.valid && selected.lane_roi.left_inner_px != null && selected.lane_roi.right_inner_px != null && (
+                      <g className="annotation-lane-roi">
+                        <line
+                          x1="0" y1={4096 - selected.lane_roi.left_inner_px}
+                          x2="5120" y2={4096 - selected.lane_roi.left_inner_px}
+                          stroke="#00FF88" strokeWidth="12" strokeDasharray="40 20"
+                          opacity="0.9"
+                        />
+                        <line
+                          x1="0" y1={4096 - selected.lane_roi.right_inner_px}
+                          x2="5120" y2={4096 - selected.lane_roi.right_inner_px}
+                          stroke="#00FF88" strokeWidth="12" strokeDasharray="40 20"
+                          opacity="0.9"
+                        />
+                        <text x="30" y={Math.max(60, 4096 - selected.lane_roi.left_inner_px - 20)}
+                          fill="#00FF88" fontSize="56" fontWeight="700" fontFamily="monospace"
+                          opacity="0.9"
+                        >FAIXA</text>
+                      </g>
+                    )}
                     {draftBox && (() => {
                       const rect = boxToCanvasRect(draftBox)
                       const color = PATHOLOGY_CLASSES[selectedClass]?.color ?? '#fff'

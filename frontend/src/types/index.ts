@@ -106,12 +106,20 @@ export interface ImagemAnalise {
   arquivo: string
   bloco_index: number
   faixa_index: number
-  lote_index: number          // compatibilidade: bloco_index * 4 + faixa_index
+  lote_index: number
   km: number | null
   existe_imagem: boolean
   total_deteccoes: number
   deteccoes: Deteccao[]
   faixa_meta?: FaixaMeta
+  lane_roi?: {
+    valid: boolean
+    left_inner_px: number | null
+    right_inner_px: number | null
+    left_inner_m: number | null
+    right_inner_m: number | null
+    confidence: number
+  } | null
 }
 
 export interface AnaliseResponse {

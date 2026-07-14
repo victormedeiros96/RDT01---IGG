@@ -11,7 +11,7 @@ export interface ViagemConfig {
 }
 
 export type Step = 'select-type' | 'config-viagem' | 'select-folder' | 'processing'
-export type View = 'home' | 'jobs' | 'reports' | 'analise' | 'test' | 'settings'
+export type View = 'home' | 'jobs' | 'reports' | 'analise' | 'settings'
 
 type Theme = 'dark' | 'light'
 
