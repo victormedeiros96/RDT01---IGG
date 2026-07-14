@@ -1701,6 +1701,10 @@ html.light body {
   cursor: crosshair;
 }
 
+.annotation-lane-roi line {
+  vector-effect: non-scaling-stroke;
+}
+
 /* ── Grid Card (Retigráfico) ── */
 .grid-card {
   padding: 1.25rem 1.5rem;

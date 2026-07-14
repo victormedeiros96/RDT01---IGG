@@ -801,6 +801,11 @@ export function AnaliseView() {
                   <span>
                     {filteredDetections.length}/{editedDetections.length} objetos
                     {metragemRange ? ` · ${metragemRange.inicio}km–${metragemRange.fim}km` : ''}
+                    {selected.lane_roi?.valid && (
+                      <span style={{ color: '#00FF88', marginLeft: '0.75rem' }}>
+                        🟢 FAIXA {selected.lane_roi.left_inner_m?.toFixed(2)}m–{selected.lane_roi.right_inner_m?.toFixed(2)}m
+                      </span>
+                    )}
                   </span>
                 ) : (
                   <span>Selecione uma imagem</span>
@@ -901,19 +906,17 @@ export function AnaliseView() {
                         <line
                           x1="0" y1={4096 - selected.lane_roi.left_inner_px}
                           x2="5120" y2={4096 - selected.lane_roi.left_inner_px}
-                          stroke="#00FF88" strokeWidth="12" strokeDasharray="40 20"
-                          opacity="0.9"
+                          stroke="#00FF88" strokeWidth="18" strokeDasharray="160 80"
+                          opacity="0.95" vectorEffect="non-scaling-stroke"
                         />
                         <line
                           x1="0" y1={4096 - selected.lane_roi.right_inner_px}
                           x2="5120" y2={4096 - selected.lane_roi.right_inner_px}
-                          stroke="#00FF88" strokeWidth="12" strokeDasharray="40 20"
-                          opacity="0.9"
+                          stroke="#00FF88" strokeWidth="18" strokeDasharray="160 80"
+                          opacity="0.95" vectorEffect="non-scaling-stroke"
                         />
-                        <text x="30" y={Math.max(60, 4096 - selected.lane_roi.left_inner_px - 20)}
-                          fill="#00FF88" fontSize="56" fontWeight="700" fontFamily="monospace"
-                          opacity="0.9"
-                        >FAIXA</text>
+                        <rect x="0" y="0" width="320" height="100" fill="#00FF88" rx="12" opacity="0.9" />
+                        <text x="24" y="66" fill="#000" fontSize="56" fontWeight="800" fontFamily="monospace">FAIXA</text>
                       </g>
                     )}
                     {draftBox && (() => {
