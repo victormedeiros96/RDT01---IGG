@@ -163,8 +163,16 @@ def _processar_lane_roi(
         # Pega a primeira faixa (5m) → 2560px de altura (inference)
         faixa_inf = concat[:FAIXA_ALTURA_PX, :, :]
 
+        # Aplica CLAHE forte para realçar marcações da faixa
+        lab = cv2.cvtColor(faixa_inf, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        clahe = cv2.createCLAHE(clipLimit=8.0, tileGridSize=(8, 8))
+        l = clahe.apply(l)
+        lab = cv2.merge([l, a, b])
+        faixa_clahe = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
         try:
-            lane_service.process_images([faixa_inf], idx, output_dir)
+            lane_service.process_images([faixa_clahe], idx, output_dir)
         except Exception as e:
             import logging
             logging.warning(f"LaneROI erro no lote {idx}: {e}")
