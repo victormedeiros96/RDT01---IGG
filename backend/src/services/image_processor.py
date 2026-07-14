@@ -116,9 +116,9 @@ def _processar_lane_roi(
     modelo_lane_path: str | Path | None = None,
 ) -> None:
     """
-    Executa detecção de faixa (lane) na imagem de INFERÊNCIA (4096×2560)
-    de cada lote. A imagem é montada igual ao _processar_lote faz,
-    garantindo a mesma proporção 4:5 que o detector espera.
+    Executa detecção de faixa (lane) em CADA frame individual raw (4096×1024).
+    Cada frame é processado isoladamente e as detecções são combinadas
+    por mediana para o lote.
     """
     if modelo_lane_path is None:
         return
@@ -135,44 +135,30 @@ def _processar_lane_roi(
         if roi_path.exists():
             continue
 
-        # Monta a imagem igual ao _processar_lote
-        raw: list[tuple[Path, np.ndarray]] = []
+        imagens: list[np.ndarray] = []
         for path in batch_paths:
             img = cv2.imread(str(path))
-            if img is not None:
-                raw.append((path, img))
-        if not raw:
-            continue
-
-        resized: list[np.ndarray] = []
-        for path, img in raw:
+            if img is None or img.size == 0:
+                continue
             if img.shape[1] != LARGURA_PX:
                 ratio = LARGURA_PX / img.shape[1]
                 nova_altura = int(img.shape[0] * ratio)
                 img = cv2.resize(img, (LARGURA_PX, nova_altura), interpolation=cv2.INTER_LANCZOS4)
-            resized.append(img)
+            # CLAHE + normalização para realçar faixas apagadas
+            lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+            l_c, a_ch, b_ch = cv2.split(lab)
+            clahe = cv2.createCLAHE(clipLimit=20.0, tileGridSize=(4, 4))
+            l_c = clahe.apply(l_c)
+            l_c = cv2.normalize(l_c, None, 0, 255, cv2.NORM_MINMAX)
+            lab = cv2.merge([l_c, a_ch, b_ch])
+            img = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+            imagens.append(img)
 
-        total_h = sum(img.shape[0] for _, img in raw)
-        concat = np.zeros((total_h, LARGURA_PX, 3), dtype=np.uint8)
-        y = 0
-        for img in reversed(resized):
-            h = img.shape[0]
-            concat[y:y+h] = img
-            y += h
-
-        # Pega a primeira faixa (5m) → 2560px de altura (inference)
-        faixa_inf = concat[:FAIXA_ALTURA_PX, :, :]
-
-        # Aplica CLAHE forte para realçar marcações da faixa
-        lab = cv2.cvtColor(faixa_inf, cv2.COLOR_BGR2LAB)
-        l, a, b = cv2.split(lab)
-        clahe = cv2.createCLAHE(clipLimit=8.0, tileGridSize=(8, 8))
-        l = clahe.apply(l)
-        lab = cv2.merge([l, a, b])
-        faixa_clahe = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+        if not imagens:
+            continue
 
         try:
-            lane_service.process_images([faixa_clahe], idx, output_dir)
+            lane_service.process_images(imagens, idx, output_dir)
         except Exception as e:
             import logging
             logging.warning(f"LaneROI erro no lote {idx}: {e}")

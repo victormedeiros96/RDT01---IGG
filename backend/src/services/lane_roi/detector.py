@@ -20,7 +20,7 @@ class OBBResult:
         return f"OBB(cls={self.class_id}, conf={self.confidence:.3f}, x_m={self.x_center_m:.3f})"
 
 
-def preprocess(img_np, target_size=C.YOLO_IMGSZ, clahe_clip=6.0, clahe_tile=8):
+def preprocess(img_np, target_size=C.YOLO_IMGSZ, clahe_clip=12.0, clahe_tile=4):
     lab = cv2.cvtColor(img_np, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
     clahe = cv2.createCLAHE(clipLimit=clahe_clip, tileGridSize=(clahe_tile, clahe_tile))
