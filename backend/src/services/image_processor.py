@@ -116,9 +116,9 @@ def _processar_lane_roi(
     modelo_lane_path: str | Path | None = None,
 ) -> None:
     """
-    Executa detecção de faixa (lane) em TODAS as imagens raw de cada lote,
-    mesmo nos lotes que serão pulados pela amostragem.
-    Salva lote_XXXX_lane.json para cada lote.
+    Executa detecção de faixa (lane) na imagem de INFERÊNCIA (4096×2560)
+    de cada lote. A imagem é montada igual ao _processar_lote faz,
+    garantindo a mesma proporção 4:5 que o detector espera.
     """
     if modelo_lane_path is None:
         return
@@ -133,19 +133,38 @@ def _processar_lane_roi(
     for idx, batch_paths in enumerate(lotes):
         roi_path = output_dir / f"lote_{idx:04d}_lane.json"
         if roi_path.exists():
-            continue  # Já processado
-
-        imagens: list[np.ndarray] = []
-        for path in batch_paths:
-            img = cv2.imread(str(path))
-            if img is not None and img.size > 0:
-                imagens.append(img)
-
-        if not imagens:
             continue
 
+        # Monta a imagem igual ao _processar_lote
+        raw: list[tuple[Path, np.ndarray]] = []
+        for path in batch_paths:
+            img = cv2.imread(str(path))
+            if img is not None:
+                raw.append((path, img))
+        if not raw:
+            continue
+
+        resized: list[np.ndarray] = []
+        for path, img in raw:
+            if img.shape[1] != LARGURA_PX:
+                ratio = LARGURA_PX / img.shape[1]
+                nova_altura = int(img.shape[0] * ratio)
+                img = cv2.resize(img, (LARGURA_PX, nova_altura), interpolation=cv2.INTER_LANCZOS4)
+            resized.append(img)
+
+        total_h = sum(img.shape[0] for _, img in raw)
+        concat = np.zeros((total_h, LARGURA_PX, 3), dtype=np.uint8)
+        y = 0
+        for img in reversed(resized):
+            h = img.shape[0]
+            concat[y:y+h] = img
+            y += h
+
+        # Pega a primeira faixa (5m) → 2560px de altura (inference)
+        faixa_inf = concat[:FAIXA_ALTURA_PX, :, :]
+
         try:
-            lane_service.process_images(imagens, idx, output_dir)
+            lane_service.process_images([faixa_inf], idx, output_dir)
         except Exception as e:
             import logging
             logging.warning(f"LaneROI erro no lote {idx}: {e}")
