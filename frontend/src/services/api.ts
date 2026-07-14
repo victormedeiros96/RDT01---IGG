@@ -203,3 +203,7 @@ export async function listarViagens(): Promise<ViagemResumo[]> {
   const { data } = await api.get('/relatorios/viagens')
   return data
 }
+
+export async function deletarAnalise(viagemNome: string): Promise<void> {
+  await api.delete(`/pastas/analise/${encodeURIComponent(viagemNome)}`)
+}

@@ -410,3 +410,18 @@ async def salvar_analise_editada(
         "imagens_atualizadas": atualizadas,
         "parametros_atualizados": parametros_atualizados,
     }
+
+
+@router.delete("/analise/{viagem_nome}")
+async def deletar_analise(
+    viagem_nome: str,
+    settings: Settings = Depends(get_settings_dep),
+):
+    import shutil
+
+    base = settings.dados_dir / viagem_nome
+    if not base.is_dir():
+        raise HTTPException(404, f"Viagem não encontrada: {viagem_nome}")
+
+    shutil.rmtree(base)
+    return {"status": "ok", "viagem": viagem_nome}

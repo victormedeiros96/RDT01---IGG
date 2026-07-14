@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listarViagens } from '../services/api'
+import { listarViagens, deletarAnalise } from '../services/api'
 import type { ViagemResumo } from '../services/api'
 import { useAppStore } from '../store'
 import { IconChevronRight, IconDownload, IconEye, IconArrowDown } from '../icons'
@@ -60,6 +60,16 @@ export function ReportsView() {
   const handleAnalise = (viagem: string) => {
     setViagemAnaliseNome(viagem)
     setCurrentView('analise')
+  }
+
+  const handleDelete = async (viagem: string) => {
+    if (!confirm(`Excluir todos os dados da viagem "${viagem}"?`)) return
+    try {
+      await deletarAnalise(viagem)
+      setViagens((prev) => prev.filter((v) => v.viagem !== viagem))
+    } catch {
+      alert('Erro ao excluir')
+    }
   }
 
   return (
@@ -134,6 +144,14 @@ export function ReportsView() {
                         title="Ver Análise"
                       >
                         <IconEye size={14} />
+                      </button>
+                      <button
+                        className="btn-sm"
+                        style={{ color: 'var(--danger)' }}
+                        onClick={(e) => { e.stopPropagation(); handleDelete(v.viagem) }}
+                        title="Excluir"
+                      >
+                        🗑
                       </button>
                     </td>
                   </tr>
