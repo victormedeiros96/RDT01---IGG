@@ -10,6 +10,7 @@ import numpy as np
 import torch
 
 from src.services.inference_engine import YOLOv8ONNX
+from src.services.lane_roi_service import LaneROIService
 
 
 # ── Constantes da imagem de 5m ──
@@ -436,6 +437,11 @@ class InferencePipeline:
                             image_stem,
                             y_scale=model_y_scales.get(nome, Y_SCALE),
                         ))
+
+            # Filtra detecções fora da ROI da faixa (lane)
+            lane_roi = LaneROIService.carregar_roi(self.input_folder, bloco["indice"])
+            if lane_roi:
+                detections = LaneROIService.filtrar_por_roi(detections, lane_roi)
 
             detections = self._postprocess_trinca_jacare(detections)
 

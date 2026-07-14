@@ -10,6 +10,8 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from src.services.lane_roi_service import LaneROIService
+
 # ── Constantes hardcoded do linescan ──
 LARGURA_PX = 4096       # 4 metros
 ALTURA_PX = 1024        # 2 metros (altura de cada imagem raw)
@@ -105,6 +107,48 @@ def _calcular_km_faixa(
     )
 
     return km_inicio_faixa, km_fim_faixa
+
+
+def _processar_lane_roi(
+    source_dir: Path,
+    output_dir: Path,
+    lotes: list[list[Path]],
+    modelo_lane_path: str | Path | None = None,
+) -> None:
+    """
+    Executa detecção de faixa (lane) em TODAS as imagens raw de cada lote,
+    mesmo nos lotes que serão pulados pela amostragem.
+    Salva lote_XXXX_lane.json para cada lote.
+    """
+    if modelo_lane_path is None:
+        return
+
+    try:
+        lane_service = LaneROIService(modelo_lane_path)
+    except Exception as e:
+        import logging
+        logging.warning(f"LaneROI não disponível: {e}")
+        return
+
+    for idx, batch_paths in enumerate(lotes):
+        roi_path = output_dir / f"lote_{idx:04d}_lane.json"
+        if roi_path.exists():
+            continue  # Já processado
+
+        imagens: list[np.ndarray] = []
+        for path in batch_paths:
+            img = cv2.imread(str(path))
+            if img is not None and img.size > 0:
+                imagens.append(img)
+
+        if not imagens:
+            continue
+
+        try:
+            lane_service.process_images(imagens, idx, output_dir)
+        except Exception as e:
+            import logging
+            logging.warning(f"LaneROI erro no lote {idx}: {e}")
 
 
 def _processar_lote(
@@ -234,6 +278,7 @@ def processar_pasta(
 ) -> list[dict]:
     """
     1. Ordena imagens e agrupa em lotes de imagens_por_lote.
+    1b. Executa detecção de faixa (lane) em TODAS as imagens (pré-processamento).
     2. Aplica padrão de amostragem: pula blocos conforme tipo_pista/sentido/faixa.
     3. Para cada bloco, salva APENAS 1 faixa de 5m (faixa_alvo).
     """
@@ -251,6 +296,10 @@ def processar_pasta(
 
     if max_batches is not None:
         lotes批次 = lotes批次[:max_batches]
+
+    # ★ Lane detection em TODOS os lotes (pré-processamento)
+    if modelo_lane:
+        _processar_lane_roi(source, pasta_destino, lotes批次, modelo_lane)
 
     pular_bloco = (tipo_pista == "simples") or (tipo_pista == "dupla" and faixa == 1)
     faixa_alvo = 0 if sentido == "crescente" else 3

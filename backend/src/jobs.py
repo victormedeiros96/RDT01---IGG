@@ -59,6 +59,7 @@ def processar_imagens_job(
         tipo_pista=tipo_pista,
         faixa=faixa,
         max_batches=max_batches,
+        modelo_lane=settings.modelos_dir / "lane" / "best.pt" if (settings.modelos_dir / "lane" / "best.pt").exists() else None,
     )
 
     return {
