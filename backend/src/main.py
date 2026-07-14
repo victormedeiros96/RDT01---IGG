@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api import folders_router, models_router, projects_router, reports_router, debug_router
+from src.api.routes_lane import router as lane_router
 from src.core.config import get_settings
 
 settings = get_settings()
@@ -25,6 +26,7 @@ app.include_router(models_router)
 app.include_router(projects_router)
 app.include_router(reports_router)
 app.include_router(debug_router)
+app.include_router(lane_router)
 
 
 @app.get("/health")
