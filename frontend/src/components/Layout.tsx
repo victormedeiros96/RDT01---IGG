@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore, type View } from '../store'
-import { IconHome, IconImage, IconBarChart, IconChevronsLeft, IconUser, IconEye } from '../icons'
+import { IconHome, IconImage, IconBarChart, IconChevronsLeft, IconUser, IconEye, IconSettings } from '../icons'
 
 const TABS: { id: View; label: string; icon: typeof IconHome }[] = [
   { id: 'home', label: 'Início', icon: IconHome },
@@ -8,6 +8,7 @@ const TABS: { id: View; label: string; icon: typeof IconHome }[] = [
   { id: 'analise', label: 'Análise', icon: IconEye },
   { id: 'test', label: 'Teste', icon: IconEye },
   { id: 'reports', label: 'Relatórios', icon: IconBarChart },
+  { id: 'settings', label: 'Config', icon: IconSettings },
 ]
 
 export function Layout({ children }: { children: React.ReactNode }) {

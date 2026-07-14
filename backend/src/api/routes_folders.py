@@ -23,6 +23,92 @@ async def listar_fontes(settings: Settings = Depends(get_settings_dep)):
     except Exception:
         return {"fontes": []}
 
+
+@router.get("/config/fontes/scan")
+async def scan_fontes(settings: Settings = Depends(get_settings_dep)):
+    """Escaneia /mnt/ em busca de pastas com imagens, até 3 níveis de profundidade."""
+    sugestoes: list[dict] = []
+
+    def _scan_dir(base: Path, depth: int = 0):
+        if depth > 3:
+            return
+        if not base.is_dir():
+            return
+        try:
+            for p in sorted(base.iterdir()):
+                if not p.is_dir():
+                    continue
+                # Verifica se tem imagens direto ou subpasta left/
+                for candidate in [p, p / "left"]:
+                    if not candidate.is_dir():
+                        continue
+                    imgs = list(candidate.glob("*.[jJ][pP][gG]")) + list(candidate.glob("*.[pP][nN][gG]"))
+                    if imgs:
+                        sugestoes.append({
+                            "caminho": str(p),
+                            "nome": p.name,
+                            "total_imagens": len(imgs),
+                        })
+                        break
+                else:
+                    _scan_dir(p, depth + 1)
+        except PermissionError:
+            pass
+
+    _scan_dir(Path("/mnt"))
+    sugestoes.sort(key=lambda s: s["nome"])
+    return {"sugestoes": sugestoes}
+
+
+@router.post("/config/fontes")
+async def adicionar_fonte(body: dict, settings: Settings = Depends(get_settings_dep)):
+    import json as _json
+    path = settings.sources_config
+
+    fontes: list[dict] = []
+    if path.is_file():
+        try:
+            fontes = _json.loads(path.read_text(encoding="utf-8")).get("fontes", [])
+        except Exception:
+            fontes = []
+
+    nova = {
+        "id": body.get("id", ""),
+        "nome": body.get("nome", ""),
+        "origem": body.get("origem", ""),
+        "destino": body.get("destino", ""),
+    }
+    if not nova["id"] or not nova["origem"]:
+        raise HTTPException(400, "Campos 'id' e 'origem' são obrigatórios")
+
+    # Remove duplicata se existir
+    fontes = [f for f in fontes if f.get("id") != nova["id"]]
+    fontes.append(nova)
+
+    path.write_text(_json.dumps({"fontes": fontes}, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"status": "ok", "fonte": nova}
+
+
+@router.delete("/config/fontes/{fonte_id}")
+async def remover_fonte(fonte_id: str, settings: Settings = Depends(get_settings_dep)):
+    import json as _json
+    path = settings.sources_config
+    if not path.is_file():
+        raise HTTPException(404, "Nenhuma fonte configurada")
+
+    fontes: list[dict] = []
+    try:
+        fontes = _json.loads(path.read_text(encoding="utf-8")).get("fontes", [])
+    except Exception:
+        raise HTTPException(500, "Erro ao ler configuração")
+
+    novas = [f for f in fontes if f.get("id") != fonte_id]
+    if len(novas) == len(fontes):
+        raise HTTPException(404, f"Fonte '{fonte_id}' não encontrada")
+
+    path.write_text(_json.dumps({"fontes": novas}, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {"status": "ok", "removida": fonte_id}
+
 EXTENSOES_IMAGEM = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
 JOBS_LIST_KEY = "rdt01:jobs"
 

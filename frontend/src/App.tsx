@@ -8,6 +8,7 @@ import { JobsList } from './components/JobsList'
 import { AnaliseView } from './components/AnaliseView'
 import { TestInference } from './components/TestInference'
 import { ReportsView } from './components/ReportsView'
+import { SettingsView } from './components/SettingsView'
 import { useAppStore } from './store'
 
 function HomeContent() {
@@ -60,6 +61,7 @@ export default function App() {
     reports: <ReportsView />,
     analise: <AnaliseView />,
     test: <TestInference />,
+    settings: <SettingsView />,
   }
 
   return <Layout>{views[currentView] ?? views.home}</Layout>
