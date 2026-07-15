@@ -20,9 +20,10 @@ class FrameResult:
 
 
 class LaneDetector:
-    def __init__(self, model_path="weights/best.pt", device="cuda"):
+    def __init__(self, model_path="weights/best.pt", device="cuda", enhance=False):
         self.detector = Detector(model_path, device=device)
         self.tracker = LaneTracker()
+        self.enhance = enhance
 
     def process(self, img):
         result = FrameResult()
@@ -31,7 +32,7 @@ class LaneDetector:
 
         h_orig, w_orig = img.shape[:2]
         if w_orig != C.YOLO_IMGSZ or h_orig != C.YOLO_IMGSZ:
-            tensor = preprocess(img)
+            tensor = preprocess(img, enhance=self.enhance)
             img_r = tensor_to_numpy(tensor)
         else:
             img_r = img

@@ -20,14 +20,21 @@ class OBBResult:
         return f"OBB(cls={self.class_id}, conf={self.confidence:.3f}, x_m={self.x_center_m:.3f})"
 
 
-def preprocess(img_np, target_size=C.YOLO_IMGSZ, clahe_clip=12.0, clahe_tile=4):
+def enhance_contrast(img_np, clip_limit=3.0, saturation_boost=2.0):
     lab = cv2.cvtColor(img_np, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=clahe_clip, tileGridSize=(clahe_tile, clahe_tile))
-    l = clahe.apply(l)
-    lab = cv2.merge([l, a, b])
-    img_np = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+    clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(8, 8))
+    l_eq = clahe.apply(l)
+    img_eq = cv2.cvtColor(cv2.merge((l_eq, a, b)), cv2.COLOR_LAB2BGR)
 
+    hsv = cv2.cvtColor(img_eq, cv2.COLOR_BGR2HSV).astype(np.float32)
+    hsv[:, :, 1] = np.clip(hsv[:, :, 1] * saturation_boost, 0, 255)
+    return cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
+
+
+def preprocess(img_np, target_size=C.YOLO_IMGSZ, enhance=False):
+    if enhance:
+        img_np = enhance_contrast(img_np)
     tensor = F.to_image(img_np)
     tensor = F.resize(tensor, (target_size, target_size),
                       interpolation=F.InterpolationMode.BILINEAR,
