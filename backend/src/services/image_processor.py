@@ -167,14 +167,6 @@ def _processar_lane_roi(
             y_fim = y_inicio + FAIXA_ALTURA_PX
             if y_fim <= concat.shape[0]:
                 faixa = concat[y_inicio:y_fim, :, :]
-                # CLAHE + normalização
-                lab = cv2.cvtColor(faixa, cv2.COLOR_BGR2LAB)
-                l_c, a_ch, b_ch = cv2.split(lab)
-                clahe = cv2.createCLAHE(clipLimit=20.0, tileGridSize=(4, 4))
-                l_c = clahe.apply(l_c)
-                l_c = cv2.normalize(l_c, None, 0, 255, cv2.NORM_MINMAX)
-                lab = cv2.merge([l_c, a_ch, b_ch])
-                faixa = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
                 faixas.append(faixa)
 
         if not faixas:

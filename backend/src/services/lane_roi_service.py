@@ -12,7 +12,7 @@ from src.services.lane_roi import calibration as C
 
 class LaneROIService:
     def __init__(self, model_path: str | Path, device: str = "cuda"):
-        self.detector = LaneDetector(str(model_path), device=device)
+        self.detector = LaneDetector(str(model_path), device=device, enhance=True)
         self._loaded = True
 
     def process_images(
